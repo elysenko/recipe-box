@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: recipe-box
+  namespace: colossus-recipe-box
+  labels:
+    app: recipe-box
+    managed-by: colossus
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: ubuntu.desmana-truck.ts.net
+      http:
+        paths:
+          - path: /recipe-box(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: recipe-box
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - ubuntu.desmana-truck.ts.net
+      secretName: colossus-shared-tls
