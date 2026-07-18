@@ -1,27 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: recipe-box
-  namespace: colossus-recipe-box
+  name: recipe-box-staging
+  namespace: colossus-recipe-box-staging
   labels:
-    app: recipe-box
+    app: recipe-box-staging
     managed-by: colossus
 spec:
   replicas: 1
-  # Recreate (NOT the default RollingUpdate): the per-project namespace has a hard
-  # memory ResourceQuota. A RollingUpdate creates the new pod before terminating the
-  # old one, transiently needing 2x the pod's memory — which the quota denies, so the
-  # rollout stalls with ProgressDeadlineExceeded. Kill-before-create is correct for a
-  # single-replica staging app (a few seconds of downtime is acceptable).
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: recipe-box
+      app: recipe-box-staging
   template:
     metadata:
       labels:
-        app: recipe-box
+        app: recipe-box-staging
     spec:
       hostAliases:
         - ip: "192.168.50.250"
@@ -29,7 +24,7 @@ spec:
             - "ubuntu.desmana-truck.ts.net"
       containers:
         - name: app
-          image: ubuntu:30500/recipe-box:latest
+          image: ubuntu:30500/recipe-box-staging:latest
           imagePullPolicy: Always
           envFrom:
             - secretRef:

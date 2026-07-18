@@ -1,10 +1,10 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: recipe-box
-  namespace: colossus-recipe-box
+  name: recipe-box-staging
+  namespace: colossus-recipe-box-staging
   labels:
-    app: recipe-box
+    app: recipe-box-staging
     managed-by: colossus
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
@@ -15,11 +15,11 @@ spec:
     - host: ubuntu.desmana-truck.ts.net
       http:
         paths:
-          - path: /recipe-box(/|$)(.*)
+          - path: /recipe-box-staging(/|$)(.*)
             pathType: ImplementationSpecific
             backend:
               service:
-                name: recipe-box
+                name: recipe-box-staging
                 port:
                   number: 80
   tls:
