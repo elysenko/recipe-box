@@ -1,21 +1,29 @@
 import express from 'express';
-import { prisma } from './lib/prisma';
-import { signToken, verifyPassword } from './lib/auth';
+import { healthRouter } from './routes/health';
+import { authRouter } from './routes/auth';
+import { recipesRouter } from './routes/recipes';
+import { plannerRouter } from './routes/planner';
+import { adminRouter } from './routes/admin';
 
 export const app = express();
 app.use(express.json());
 
-// Health probe: the platform's backend reachability check (descriptor backend_probe_path).
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok' });
+// Permissive CORS — in production nginx proxies the SPA to /api same-origin,
+// but this keeps local dev (vite proxy / direct calls) working too.
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
+  next();
 });
 
-app.post('/api/auth/login', async (req, res) => {
-  const { email, password } = req.body ?? {};
-  if (!email || !password) return res.status(400).json({ error: 'email and password required' });
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user || !verifyPassword(password, user.password)) {
-    return res.status(401).json({ error: 'invalid credentials' });
-  }
-  return res.json({ token: signToken({ sub: user.id, role: user.role }), role: user.role });
-});
+// API routes. Mounted before any catch-all so /api/* is never shadowed.
+app.use('/api', healthRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/recipes', recipesRouter);
+app.use('/api/planner', plannerRouter);
+app.use('/api/admin', adminRouter);
