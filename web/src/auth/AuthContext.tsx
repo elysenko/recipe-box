@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
-import type { Role, User } from '../lib/types';
+import type { User } from '../lib/types';
 
 interface AuthState {
   user: User | null;
@@ -45,31 +45,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function login(email: string, password: string): Promise<User> {
-    try {
-      const res = await api<{ token: string; user: User }>('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      });
-      localStorage.setItem('token', res.token);
-      localStorage.setItem('user', JSON.stringify(res.user));
-      setUser(res.user);
-      setDemoMode(false);
-      return res.user;
-    } catch (err) {
-      // Static-preview fallback: allow the seeded demo accounts to sign in offline
-      // so every screen in the mockup is reachable without a live backend.
-      const role: Role = email.trim().toLowerCase().startsWith('admin') ? 'ADMIN' : 'USER';
-      const demoUser: User = {
-        id: role === 'ADMIN' ? 'u-admin' : 'u-user',
-        email: email.trim() || (role === 'ADMIN' ? 'admin@demo.test' : 'user@demo.test'),
-        role,
-      };
-      localStorage.setItem('token', 'demo-token');
-      localStorage.setItem('user', JSON.stringify(demoUser));
-      setUser(demoUser);
-      setDemoMode(true);
-      return demoUser;
-    }
+    // Authenticate against the real backend. A failed login (401 / invalid
+    // credentials) must propagate so the Login page shows an error and no
+    // token/user is stored — never fall back to a fabricated demo session.
+    const res = await api<{ token: string; user: User }>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    localStorage.setItem('token', res.token);
+    localStorage.setItem('user', JSON.stringify(res.user));
+    setUser(res.user);
+    setDemoMode(false);
+    return res.user;
   }
 
   function logout() {

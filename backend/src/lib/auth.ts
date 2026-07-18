@@ -1,8 +1,9 @@
 import jwt from 'jsonwebtoken';
-import { createHash } from 'crypto';
+import bcrypt from 'bcryptjs';
 import type { Request, Response, NextFunction } from 'express';
 
 const SECRET = process.env.JWT_SECRET || 'dev-secret';
+const SALT_ROUNDS = 10;
 
 export type Role = 'ADMIN' | 'USER';
 
@@ -30,11 +31,15 @@ export function verifyToken(token: string): unknown {
 }
 
 export function hashPassword(password: string): string {
-  return createHash('sha256').update(password).digest('hex');
+  return bcrypt.hashSync(password, SALT_ROUNDS);
 }
 
 export function verifyPassword(password: string, hash: string): boolean {
-  return hashPassword(password) === hash;
+  try {
+    return bcrypt.compareSync(password, hash);
+  } catch {
+    return false;
+  }
 }
 
 interface TokenPayload {
