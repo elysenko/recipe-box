@@ -13,10 +13,45 @@ enum Role {
 }
 
 model User {
+  id          String      @id @default(uuid())
+  email       String      @unique
+  name        String
+  password    String
+  role        Role        @default(USER)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  recipes     Recipe[]
+  planEntries PlanEntry[]
+}
+
+model Recipe {
+  id          String      @id @default(uuid())
+  title       String
+  // JSON-encoded string arrays (parsed/serialized by the API layer).
+  ingredients String      @default("[]")
+  steps       String      @default("[]")
+  tags        String      @default("[]")
+  servings    Int         @default(1)
+  ownerId     String
+  owner       User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  planEntries PlanEntry[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([ownerId])
+}
+
+model PlanEntry {
   id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      Role     @default(USER)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  week      String // ISO week, e.g. "2026-W29"
+  day       String // MON..SUN
+  recipeId  String
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, week, day, recipeId])
+  @@index([userId, week])
 }
