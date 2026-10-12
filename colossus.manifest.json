@@ -1,0 +1,13 @@
+{
+  "build": {
+    "dockerfile": "Dockerfile",
+    "method": "dockerfile",
+    "port": 80
+  },
+  "env": {
+    "required": []
+  },
+  "name": "recipe-box",
+  "run": {},
+  "schemaVersion": 1
+}
